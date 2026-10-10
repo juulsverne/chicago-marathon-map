@@ -1,0 +1,52 @@
+{
+  "name": "chicago-marathon-map",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build:data": "tsx scripts/build-data.ts",
+    "vendor": "tsx scripts/vendor-assets.ts",
+    "predev": "npm run vendor",
+    "prebuild": "npm run vendor",
+    "test:perf": "playwright test --config playwright.perf.config.ts"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.8.0",
+    "@number-flow/react": "0.6.2",
+    "gsap": "3.15.0",
+    "maplibre-gl": "6.11.2",
+    "motion": "14.0.0",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@fontsource-variable/big-shoulders": "5.3.0",
+    "@fontsource/big-shoulders": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/instrument-sans": "5.3.0",
+    "@maplibre/maplibre-gl-style-spec": "26.4.4",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^24.19.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "playwright-core": "1.63.0",
+    "tailwindcss": "^4",
+    "tsx": "4.23.15",
+    "typescript": "^5",
+    "vitest": "5.0.3"
+  }
+}

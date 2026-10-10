@@ -1,0 +1,455 @@
+@import "tailwindcss";
+
+/* v1's dark palette. The map's own colors live in src/map/palette.ts; every token both define must match
+   (tests/unit/palette.test.ts). src/map/daylight.ts changes the map colors through the day. */
+@theme {
+  /* The story's recreated paper notice (src/ui/story/Story.tsx). */
+  --color-paper: #f2eee4;
+  --color-ink: #17181a;
+  --color-bg: #0c0d0f;
+  --color-panel: #141619;
+  --color-panel-2: #1b1e22;
+  --color-line: #2a2e34;
+  --color-fg: #f2f4f6;
+  --color-muted: #a0a8b2;
+  --color-soft: #79818b;
+  --color-closed: #ff3b57;
+  --color-open: #4cc0f0;
+  --color-land: #191b1e;
+  --color-water: #0b2635;
+  --color-park: #16271b;
+  --color-leader-wcm: #14b8a6;
+  --color-leader-wcw: #5eead4;
+  --color-leader-men: #2563eb;
+  --color-leader-wom: #9333ea;
+  --color-leader-wr: #e0a100;
+  --color-leader-you: #d6178f;
+  /* v1's timeline key-moment tones and start-wave colors. */
+  --color-moment-close: #ff3b57;
+  --color-moment-start: #f2f4f6;
+  --color-moment-first: #e0a100;
+  --color-moment-last: #79818b;
+  --color-moment-open: #4cc0f0;
+  --color-wave-1: #ffffff;
+  --color-wave-2: #ffc93d;
+  --color-wave-3: #9fe6ff;
+  --radius-panel: 14px;
+  /* Phones below 768 px (md), tablets to 1179 px, desktops from 1180 px (desk). */
+  --breakpoint-desk: 73.75rem;
+  /* Motion easings, mirrored from src/motion/tokens.ts: ease-standard, ease-emphasized. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* The panel's footprint: 340 px wide from 768 px and 380 px from 1180 px, inset
+   by a gutter. The header row, the dock, the map controls and the map's fit padding stay
+   clear of --panel-reserve (the width plus the gutter). */
+:root {
+  --panel-width: 0px;
+  --panel-gap: 0px;
+  --panel-reserve: 0px;
+}
+@media (width >= 48rem) {
+  :root {
+    --panel-width: 340px;
+    --panel-gap: 12px;
+    --panel-reserve: calc(var(--panel-width) + var(--panel-gap));
+  }
+}
+@media (width >= 73.75rem) {
+  :root {
+    --panel-width: 380px;
+    --panel-gap: 20px;
+  }
+}
+
+/* Motion durations, mirrored from src/motion/tokens.ts (tests/unit/motion.test.ts).
+   Use them as duration-(--motion-base) and so on. */
+:root {
+  --motion-quick: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --motion-deliberate: 600ms;
+}
+
+@theme inline {
+  --font-display: var(--font-display-face), "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  /* The display face has an optical-size axis. Left alone, the browser sets it from the font size, which
+     gives the Text design at 20-40px; 72 pins the Display design. */
+  --font-display--font-variation-settings: "opsz" 72;
+  --font-sans: var(--font-sans-face), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Focus rings are always visible on keyboard focus, for every control,
+   including ones that set no focus style of their own. */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-open);
+    outline-offset: 2px;
+  }
+}
+
+/* Pressed state for every control: a quick, small press; with reduced motion,
+   a dim instead of a scale. */
+@utility pressable {
+  transition-property: transform, background-color, color, box-shadow, opacity;
+  transition-duration: var(--motion-quick);
+  transition-timing-function: var(--ease-standard);
+  &:active {
+    transform: scale(0.96);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0ms;
+    &:active {
+      transform: none;
+      opacity: 0.8;
+    }
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.course-casing {
+  fill: none;
+  stroke: var(--color-bg);
+  stroke-width: 9px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.course-seg {
+  fill: none;
+  stroke-width: 5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 400ms ease;
+}
+.course-seg[data-state="closed"] {
+  stroke: var(--color-closed);
+}
+.course-seg[data-state="open"] {
+  stroke: var(--color-open);
+}
+
+/* Both markers use non-scaling strokes, so the 2px ring stays 2 screen pixels at any map scale. */
+.course-start {
+  fill: var(--color-fg);
+  stroke: var(--color-bg);
+  stroke-width: 2px;
+}
+
+.leader {
+  stroke: var(--color-fg);
+  stroke-width: 2px;
+}
+.leader[data-leader="wcm"] { fill: var(--color-leader-wcm); }
+.leader[data-leader="wcw"] { fill: var(--color-leader-wcw); }
+.leader[data-leader="men"] { fill: var(--color-leader-men); }
+.leader[data-leader="wom"] { fill: var(--color-leader-wom); }
+.leader[data-leader="wr"] { fill: var(--color-leader-wr); }
+.leader[data-leader="you"] { fill: var(--color-leader-you); }
+
+/* Selected and hovered streets on the SVG course (first paint and the fallback), like the map's halo. */
+.course-seg[data-selected] {
+  stroke-width: 9px;
+  filter: drop-shadow(0 0 4px var(--color-fg));
+}
+@media (hover: hover) and (pointer: fine) {
+  .course-seg {
+    cursor: pointer;
+  }
+  .course-seg:hover {
+    stroke-width: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-seg {
+    transition: none;
+  }
+}
+
+/* Map stage: the SVG course is first paint; MapLibre cross-fades in over it. */
+.map-canvas {
+  opacity: 0;
+  /* Invisible, so it must not take the pointer from the SVG under it: not before the map
+     has drawn (a drag would pan a map nobody can see) and not in the SVG fallback. */
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+.map-stage[data-engine="map"] .map-canvas {
+  opacity: 1;
+  pointer-events: auto;
+}
+.map-svg {
+  transition:
+    opacity 400ms ease,
+    visibility 0s linear 0s;
+}
+.map-stage[data-engine="map"] .map-svg {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 400ms ease,
+    visibility 0s linear 400ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-canvas,
+  .map-svg,
+  .map-stage[data-engine="map"] .map-svg {
+    transition: none;
+  }
+}
+
+/* Leader name pills over the map, placed by the map engine (src/map/leader-labels.ts). */
+.leader-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 20px;
+  padding: 0 7px;
+  border: 1.5px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-panel);
+  color: var(--color-fg);
+  font: 600 11.5px/17px var(--font-sans);
+  white-space: nowrap;
+  will-change: transform;
+}
+.leader-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.leader-lines line {
+  stroke-width: 1px;
+}
+.leader-label[data-leader="wcm"] { border-color: var(--color-leader-wcm); }
+.leader-label[data-leader="wcw"] { border-color: var(--color-leader-wcw); }
+.leader-label[data-leader="men"] { border-color: var(--color-leader-men); }
+.leader-label[data-leader="wom"] { border-color: var(--color-leader-wom); }
+.leader-label[data-leader="wr"] { border-color: var(--color-leader-wr); }
+.leader-label[data-leader="you"] { border-color: var(--color-leader-you); }
+.leader-lines line[data-leader="wcm"] { stroke: var(--color-leader-wcm); }
+.leader-lines line[data-leader="wcw"] { stroke: var(--color-leader-wcw); }
+.leader-lines line[data-leader="men"] { stroke: var(--color-leader-men); }
+.leader-lines line[data-leader="wom"] { stroke: var(--color-leader-wom); }
+.leader-lines line[data-leader="wr"] { stroke: var(--color-leader-wr); }
+.leader-lines line[data-leader="you"] { stroke: var(--color-leader-you); }
+
+/* The phone bottom sheet. Three snap points; main[data-snap] says which one
+   is showing (the prerendered page and the page with JavaScript off show "half"). The
+   sheet moves only by transform; the dock and the phone street card ride above it.
+   Heights use dvh and the safe-area insets; the half snap leaves room above the dock
+   for the header and the map controls on a 667 px phone. */
+@media (width < 48rem) {
+  main {
+    --snap-peek: calc(3.5rem + env(safe-area-inset-bottom));
+    --snap-half: max(13rem, min(34dvh, 100dvh - 28rem));
+    --snap-full: calc(100dvh - max(env(safe-area-inset-top), 0.75rem) - 3.5rem);
+    --sheet-visible: var(--snap-half);
+  }
+  main[data-snap="peek"] {
+    --sheet-visible: var(--snap-peek);
+  }
+  main[data-snap="full"] {
+    --sheet-visible: var(--snap-full);
+  }
+  .sheet {
+    height: var(--snap-full);
+    transform: translate3d(0, calc(var(--snap-full) - var(--sheet-visible)), 0);
+  }
+  /* Whatever part of the sheet is below the screen stays reachable by scrolling. */
+  .sheet-body {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom) + var(--snap-full) - var(--sheet-visible));
+  }
+  .rides-sheet {
+    bottom: var(--sheet-visible);
+    transition:
+      opacity var(--motion-base) var(--ease-standard),
+      visibility 0s linear 0s;
+  }
+  main[data-snap="full"] .rides-sheet {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--motion-base) var(--ease-standard),
+      visibility 0s linear var(--motion-base);
+  }
+}
+
+/* Copy in the right tense for the date: main[data-tense] is set after hydration. */
+.tense-past {
+  display: none;
+}
+main[data-tense="past"] .tense-past {
+  display: inline;
+}
+main[data-tense="past"] .tense-future {
+  display: none;
+}
+
+/* "When Sawe finished": the lanes grow from the start line whenever the Race tab opens
+   (showing a hidden panel restarts the animation), as v1's did, and glide when the slider moves. */
+@keyframes lane-fill-in {
+  from {
+    width: 0;
+  }
+}
+@keyframes lane-dot-in {
+  from {
+    left: 0;
+  }
+}
+.lane-fill {
+  animation: lane-fill-in var(--motion-deliberate) var(--ease-emphasized);
+  transition: width var(--motion-base) var(--ease-standard);
+}
+.lane-dot {
+  animation: lane-dot-in var(--motion-deliberate) var(--ease-emphasized);
+  transition: left var(--motion-base) var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lane-fill,
+  .lane-dot {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* The pinned spot on the map (src/map/engine.ts draws it). */
+.spot-pin svg {
+  display: block;
+  width: 26px;
+  height: 34px;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.5));
+}
+.spot-pin-body {
+  fill: var(--color-leader-you);
+  stroke: var(--color-fg);
+  stroke-width: 1.6px;
+}
+.spot-pin-dot {
+  fill: var(--color-fg);
+}
+
+/* The timeline's scrubber (src/ui/Timeline.tsx) in v1's look: a ringed thumb on a thin
+   baseline that fills red up to it. The clock sets --p (0 to 1) on the scrubber; the thumb's
+   center travels 0.5rem in from each end, so the fill ends under it. Each engine's pseudo
+   elements get rules of their own: one unknown selector would drop the whole rule. */
+.scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+.scrubber::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to right, var(--color-closed) calc(0.5rem + (100% - 1rem) * var(--p, 0)), var(--color-line) 0);
+}
+.scrubber::-moz-range-track {
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to right, var(--color-closed) calc(0.5rem + (100% - 1rem) * var(--p, 0)), var(--color-line) 0);
+}
+.scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  margin-top: calc(1px - 0.5rem);
+  border: 4px solid var(--color-closed);
+  border-radius: 50%;
+  background: var(--color-panel);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  transition: box-shadow var(--motion-quick) var(--ease-standard);
+}
+.scrubber::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  border: 4px solid var(--color-closed);
+  border-radius: 50%;
+  background: var(--color-panel);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  transition: box-shadow var(--motion-quick) var(--ease-standard);
+}
+/* Hover and press grow a soft halo around the thumb. */
+.scrubber:hover::-webkit-slider-thumb,
+.scrubber:active::-webkit-slider-thumb {
+  box-shadow:
+    0 1px 4px rgb(0 0 0 / 0.5),
+    0 0 0 6px color-mix(in srgb, var(--color-closed) 25%, transparent);
+}
+.scrubber:hover::-moz-range-thumb,
+.scrubber:active::-moz-range-thumb {
+  box-shadow:
+    0 1px 4px rgb(0 0 0 / 0.5),
+    0 0 0 6px color-mix(in srgb, var(--color-closed) 25%, transparent);
+}
+@media (forced-colors: active) {
+  .scrubber::-webkit-slider-runnable-track {
+    background: CanvasText;
+  }
+  .scrubber::-moz-range-track {
+    background: CanvasText;
+  }
+}
+/* The runner histogram's red copy shows up to the thumb (src/ui/RunnerHistogram.tsx). */
+.histogram-played {
+  clip-path: inset(0 calc(100% - var(--p, 0) * 100%) 0 0);
+}
+
+/* The key-moment pills scroll sideways; the row fades out at its right edge, as v1's did. */
+.scroll-fade-right {
+  mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+}
+
+/* The flyer-to-map story. Scrolling through the tall stage lifts each notice row
+   onto the course; with reduced motion the stage is an ordinary block with everything shown. */
+.story-stage {
+  height: 320vh;
+}
+[data-motion="static"] .story-stage {
+  height: auto;
+}
+[data-motion="static"] .story-stage > div {
+  position: static;
+  height: auto;
+  grid-template-rows: auto 60vh auto;
+}
+.story-seg-base,
+.story-seg {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.story-seg-base {
+  stroke: var(--color-line);
+  stroke-width: 3px;
+}
+.story-seg {
+  stroke: var(--color-closed);
+  stroke-width: 3.5px;
+}
